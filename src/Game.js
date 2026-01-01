@@ -264,8 +264,9 @@ export const ImpactGame = {
       // Add capital value to bank
       player.bank += card.value;
       
-      // Remove card from hand but don't discard it - it stays as money
+      // Remove card from hand and put in discard
       player.hand.splice(cardIndex, 1);
+      G.discardPile.push(card);
       player.movesPlayed += 1;
     },
     
