@@ -1,70 +1,110 @@
-# Getting Started with Create React App
+# Impact: The ESG Deal
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A strategic multiplayer card game built with React and boardgame.io, focused on Environmental, Social, and Governance (ESG) themes. Players compete to build complete asset sets across E, S, and G categories while managing capital, paying fines, and using action cards to attack opponents or defend their portfolios.
 
-## Available Scripts
+## Game Overview
 
-In the project directory, you can run:
+- **Players:** 2 players
+- **Deck:** 30 cards (12 Assets, 12 Actions, 6 Capital)
+- **Objective:** Be the first to complete 3+ asset sets in each E/S/G category with no outstanding fines
+- **Mechanics:** Turn-based gameplay with hand management, set collection, blocking system, and strategic attacks
 
-### `npm start`
+## Tech Stack
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- **React** 19.2.3
+- **boardgame.io** 0.50.2
+- **Node.js** v25.2.1
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Getting Started
 
-### `npm test`
+### Installation
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```bash
+npm install
+```
 
-### `npm run build`
+### Running the Game
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```bash
+npm start
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+Open [http://localhost:3000](http://localhost:3000) to play in your browser.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## How to Collaborate
 
-### `npm run eject`
+### 1. Clone the Repository
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+```bash
+git clone https://github.com/GauravHemrajani/impact-esg-deal.git
+cd impact-esg-deal
+```
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### 2. Create a New Branch
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+Before making changes, create your own branch:
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+```bash
+git checkout -b your-name/feature-description
+```
 
-## Learn More
+Example: `git checkout -b john/add-animations`
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+### 3. Make Your Changes
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+Edit the code in the `src/` directory:
+- **Game.js** - Game logic and moves
+- **Board.js** - UI and player interactions
+- **cards.js** - Card definitions
 
-### Code Splitting
+### 4. Test Your Changes
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+Run the game locally to test:
 
-### Analyzing the Bundle Size
+```bash
+npm start
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+### 5. Commit and Push
 
-### Making a Progressive Web App
+```bash
+git add .
+git commit -m "Brief description of your changes"
+git push origin your-name/feature-description
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+### 6. Create a Pull Request
 
-### Advanced Configuration
+Go to the [GitHub repository](https://github.com/GauravHemrajani/impact-esg-deal) and create a Pull Request from your branch to `main`. Add a description of what you changed and why.
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+## Project Structure
 
-### Deployment
+```
+src/
+├── App.js          # Client initialization
+├── Game.js         # Game rules and move logic
+├── Board.js        # Visual UI and interactions
+└── cards.js        # Card data and deck
+```
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+## Current Features
 
-### `npm run build` fails to minify
+✅ 30-card deck with shuffle and auto-deal  
+✅ Turn-based gameplay with 3 moves per turn  
+✅ Asset, Capital, and Action card playing  
+✅ Blocking system with turn-end attack queue  
+✅ All action card effects implemented (except Tech Upgrade/ISO Certification)  
+✅ Manual hand limit discard system (7 cards max)  
+✅ Win condition checking  
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+## Contributing Guidelines
+
+- **Test your code** before pushing
+- **Write clear commit messages** describing what you changed
+- **Don't commit** `node_modules/` or build files
+- **Ask questions** if you're unsure about implementation
+- **Keep changes focused** - one feature or fix per branch
+
+## Need Help?
+
+Check the code comments or reach out to the team if you're stuck!
