@@ -12,6 +12,7 @@ export function Board({ G, ctx, moves }) {
   const [selectingSet, setSelectingSet] = useState(false);
   const [availableSets, setAvailableSets] = useState([]);
   const [discarding, setDiscarding] = useState(false);
+  const [showBlockError, setShowBlockError] = useState(false);
   
   // Auto-exit discard mode when hand reaches 7 or fewer cards
   useEffect(() => {
@@ -69,6 +70,12 @@ export function Board({ G, ctx, moves }) {
 
   const handlePlayCard = (cardIndex) => {
     const card = player.hand[cardIndex];
+    
+    // Block cards can only be used reactively when there's an incoming attack
+    if (card.type === "Action" && (card.effect === "block" || card.effect === "block-e-attack")) {
+      setShowBlockError(true);
+      return;
+    }
     
     if (card.type === "Asset") {
       if (card.category === "Wild") {
@@ -384,6 +391,51 @@ export function Board({ G, ctx, moves }) {
                 </button>
               </>
             )}
+          </div>
+        </div>
+      )}
+      
+      {/* Block Card Error Popup */}
+      {showBlockError && (
+        <div style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: "rgba(0, 0, 0, 0.7)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000
+        }}>
+          <div style={{
+            backgroundColor: "white",
+            padding: "30px",
+            borderRadius: "12px",
+            maxWidth: "400px",
+            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
+            textAlign: "center"
+          }}>
+            <h2 style={{ color: "#ff9800", marginTop: 0 }}>🛡️ Can't Play Block Card</h2>
+            <p style={{ fontSize: "16px", color: "#666", margin: "20px 0" }}>
+              Block cards can only be used to defend against incoming attacks. Wait until an opponent attacks you, then you'll have the option to block.
+            </p>
+            <button
+              onClick={() => setShowBlockError(false)}
+              style={{
+                padding: "12px 24px",
+                backgroundColor: "#2196f3",
+                color: "white",
+                border: "none",
+                borderRadius: "6px",
+                cursor: "pointer",
+                fontSize: "16px",
+                fontWeight: "bold"
+              }}
+            >
+              Got it!
+            </button>
           </div>
         </div>
       )}
