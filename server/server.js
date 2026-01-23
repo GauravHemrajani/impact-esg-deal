@@ -1,20 +1,17 @@
-const { Server } = require('boardgame.io/server');
+const { Server, Origins } = require('boardgame.io/server');
 const { ImpactGame } = require('../src/Game');
 
 const server = Server({ 
   games: [ImpactGame],
   origins: [
-    'http://localhost:3000',
+    Origins.LOCALHOST,
     'https://impact-esg-deal.vercel.app',
-    /\.vercel\.app$/,  // Allow all Vercel preview deployments
+    /\.vercel\.app$/,
   ],
 });
 
 const PORT = process.env.PORT || 8000;
 
-const lobbyConfig = {
-  apiPort: PORT,
-  apiCallback: () => console.log(`🎮 Lobby API running on port ${PORT}`),
-};
-
-server.run(lobbyConfig);
+server.run(PORT, () => {
+  console.log(`🎮 Boardgame.io server with Lobby API running on port ${PORT}`);
+});
