@@ -56,55 +56,16 @@ export function WaitingRoom({ matchID, playerID, playerName, onStartGame, onLeav
   };
 
   const startGame = async () => {
-    setLoading(true);
     try {
-      const serverURL = process.env.REACT_APP_SERVER_URL || 'http://localhost:8000';
-      
-      // Create match on boardgame.io server
-      const response = await fetch(`${serverURL}/games/ImpactGame/create`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          numPlayers: 2,
-          setupData: { matchID },
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to create match on server');
-      }
-
-      const { matchID: serverMatchID } = await response.json();
-      
-      // Join both players to the match
-      await fetch(`${serverURL}/games/ImpactGame/${serverMatchID}/join`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          playerID: '0',
-          playerName: lobby.players[0].name,
-        }),
-      });
-
-      await fetch(`${serverURL}/games/ImpactGame/${serverMatchID}/join`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          playerID: '1',
-          playerName: lobby.players[1].name,
-        }),
-      });
-
       // Update Firebase with playing status
+      // boardgame.io will auto-create match when clients connect with matchID
       await updateDoc(doc(db, 'lobbies', matchID), {
         status: 'playing',
-        serverMatchID,
       });
       
       onStartGame();
     } catch (err) {
       setError('Failed to start game: ' + err.message);
-      setLoading(false);
     }
   };
 
