@@ -11,7 +11,7 @@ const GameClient = Client({
   game: ImpactGame,
   board: Board,
   debug: true,
-  // multiplayer: SocketIO({ server: serverURL }),
+  multiplayer: SocketIO({ server: serverURL }),
 });
 
 export default function App() {
