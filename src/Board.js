@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import "./Board.css";
 
 export function Board({ G, ctx, moves }) {
   const [selectedCard, setSelectedCard] = useState(null);
@@ -139,6 +140,23 @@ export function Board({ G, ctx, moves }) {
           setTargetPlayer(target);
           setAvailableSets(completeSets);
           setSelectingSet(true);
+        } else if (card.effect === "destroy-greenwashing") {
+          // Check if target has any greenwashing assets
+          const targetPlayer = G.players[target];
+          const hasGreenwashing = ["E", "S", "G"].some(category => 
+            targetPlayer.board[category].some(c => c.name && c.name.includes("Greenwashing"))
+          );
+          
+          if (!hasGreenwashing) {
+            alert("Can't play now! Target has no Greenwashing assets.");
+            setSelectedCard(null);
+            setTargetPlayer(null);
+            return;
+          }
+          
+          moves.playAction(selectedCard, target);
+          setSelectedCard(null);
+          setTargetPlayer(null);
         } else {
           moves.playAction(selectedCard, target);
           setSelectedCard(null);
@@ -216,18 +234,18 @@ export function Board({ G, ctx, moves }) {
   // Check if game is won
   if (ctx.gameover) {
     return (
-      <div style={{ padding: "50px", fontFamily: "Arial, sans-serif", textAlign: "center" }}>
-        <h1 style={{ fontSize: "48px", color: "#4caf50" }}>🎉 Game Over! 🎉</h1>
-        <h2 style={{ fontSize: "36px", margin: "20px 0" }}>
+      <div className="win-screen">
+        <h1 className="win-title">🎉 Game Over! 🎉</h1>
+        <h2 className="win-subtitle">
           Player {ctx.gameover.winner} Wins!
         </h2>
-        <div style={{ fontSize: "20px", marginTop: "30px" }}>
+        <div className="win-checklist">
           <p>✅ Complete Environment Set</p>
           <p>✅ Complete Social Set</p>
           <p>✅ Complete Governance Set</p>
           <p>✅ No Outstanding Fines</p>
         </div>
-        <div style={{ marginTop: "40px", fontSize: "24px", fontWeight: "bold" }}>
+        <div style={{ marginTop: "40px", fontSize: "28px", fontWeight: "bold" }}>
           Balanced ESG Framework Achieved!
         </div>
       </div>
@@ -238,40 +256,294 @@ export function Board({ G, ctx, moves }) {
   const isSComplete = player.board.S.length >= 3;
   const isGComplete = player.board.G.length >= 3;
 
+  const opponentIsEComplete = opponent.board.E.length >= 3;
+  const opponentIsSComplete = opponent.board.S.length >= 3;
+  const opponentIsGComplete = opponent.board.G.length >= 3;
+
   return (
-    <div style={{ padding: "30px", fontFamily: "Arial, sans-serif", maxWidth: "1400px" }}>
-      <h1>Impact: The ESG Deal</h1>
+    <div className="game-container">
+      {/* === OPPONENT AREA (TOP) === */}
+      <div className="opponent-area">
+        <div className="opponent-info">
+          <h3 style={{ margin: 0 }}>Opponent (Player {ctx.currentPlayer === "0" ? "1" : "0"})</h3>
+        </div>
+        
+        {/* Opponent's Bank & Fines Display */}
+        <div className="opponent-hand-display" style={{ gap: "20px", marginBottom: "20px" }}>
+          <div style={{ 
+            padding: "20px 40px", 
+            background: "linear-gradient(135deg, #388e3c 0%, #2e7d32 100%)", 
+            borderRadius: "10px",
+            border: "2px solid #4caf50",
+            fontSize: "18px",
+            fontWeight: "bold",
+            minWidth: "150px",
+            textAlign: "center"
+          }}>
+            💰 Bank<br/>
+            <span style={{ fontSize: "24px" }}>${opponent.bank}M</span>
+          </div>
+          <div style={{ 
+            padding: "20px 40px", 
+            background: opponent.fines > 0 ? "linear-gradient(135deg, #d32f2f 0%, #c62828 100%)" : "linear-gradient(135deg, #555 0%, #444 100%)", 
+            borderRadius: "10px",
+            border: opponent.fines > 0 ? "2px solid #f44336" : "2px solid #666",
+            fontSize: "18px",
+            fontWeight: "bold",
+            minWidth: "150px",
+            textAlign: "center"
+          }}>
+            ⚠️ Fines<br/>
+            <span style={{ fontSize: "24px" }}>${opponent.fines}M</span>
+          </div>
+          <div style={{ 
+            padding: "20px 40px", 
+            background: "linear-gradient(135deg, #1976d2 0%, #1565c0 100%)", 
+            borderRadius: "10px",
+            border: "2px solid #2196f3",
+            fontSize: "18px",
+            fontWeight: "bold",
+            minWidth: "150px",
+            textAlign: "center"
+          }}>
+            🃏 Hand<br/>
+            <span style={{ fontSize: "24px" }}>{opponent.hand.length} cards</span>
+          </div>
+        </div>
+
+        {/* Opponent's Board */}
+        <div className="opponent-board-areas">
+          {/* Environment */}
+          <div className={`board-area board-area-e ${opponentIsEComplete ? 'board-complete' : ''}`}>
+            <div className="board-area-header">🌍 Environment ({opponent.board.E.length}/3) {opponentIsEComplete && "✅"}</div>
+            {opponent.board.E.length > 0 ? (
+              opponent.board.E.map((card, idx) => (
+                <div key={idx} className="asset-card-mini">
+                  <strong>{card.name}</strong><br/>
+                  ${card.value}M
+                </div>
+              ))
+            ) : (
+              <div className="empty-board-message">No assets</div>
+            )}
+          </div>
+
+          {/* Social */}
+          <div className={`board-area board-area-s ${opponentIsSComplete ? 'board-complete' : ''}`}>
+            <div className="board-area-header">👥 Social ({opponent.board.S.length}/3) {opponentIsSComplete && "✅"}</div>
+            {opponent.board.S.length > 0 ? (
+              opponent.board.S.map((card, idx) => (
+                <div key={idx} className="asset-card-mini">
+                  <strong>{card.name}</strong><br/>
+                  ${card.value}M
+                </div>
+              ))
+            ) : (
+              <div className="empty-board-message">No assets</div>
+            )}
+          </div>
+
+          {/* Governance */}
+          <div className={`board-area board-area-g ${opponentIsGComplete ? 'board-complete' : ''}`}>
+            <div className="board-area-header">⚖️ Governance ({opponent.board.G.length}/3) {opponentIsGComplete && "✅"}</div>
+            {opponent.board.G.length > 0 ? (
+              opponent.board.G.map((card, idx) => (
+                <div key={idx} className="asset-card-mini">
+                  <strong>{card.name}</strong><br/>
+                  ${card.value}M
+                </div>
+              ))
+            ) : (
+              <div className="empty-board-message">No assets</div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* === MIDDLE AREA (DECK/DISCARD) === */}
+      <div className="middle-area">
+        <div className="deck-pile">
+          <div className="pile-visual deck-visual">🎴</div>
+          <div className="pile-count">Deck: {G.deck.length}</div>
+        </div>
+
+        <div className="turn-info">
+          <div style={{ fontSize: '24px', marginBottom: '5px' }}>Turn {ctx.turn}</div>
+          <div style={{ fontSize: '16px', opacity: 0.9 }}>Player {ctx.currentPlayer}'s Turn</div>
+        </div>
+
+        <div className="discard-pile">
+          <div className="pile-visual discard-visual">
+            {G.discardPile.length > 0 ? '🗑️' : '∅'}
+          </div>
+          <div className="pile-count">Discard: {G.discardPile.length}</div>
+        </div>
+      </div>
+
+      {/* === PLAYER AREA (BOTTOM) === */}
+      <div className="player-area">
+        {/* Player Info Bar */}
+        <div className="player-info">
+          <div className="player-stats" style={{ alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span>💰 Bank: ${player.bank}M</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span>⚠️ Fines: ${player.fines}M</span>
+              {player.fines > 0 && player.bank >= player.fines && (
+                <button 
+                  onClick={() => moves.payFine(player.fines)}
+                  className="pay-fine-button"
+                  style={{ margin: 0 }}
+                >
+                  Pay All Fines
+                </button>
+              )}
+            </div>
+          </div>
+          <div className="moves-counter">
+            Moves: {player.movesPlayed} / 3
+          </div>
+        </div>
+
+        {/* Player's Board */}
+        <div className="player-board-areas">
+          {/* Environment */}
+          <div className={`board-area board-area-e player-board-area ${isEComplete ? 'board-complete' : ''}`}>
+            <div className="board-area-header">🌍 Environment ({player.board.E.length}/3) {isEComplete && "✅"}</div>
+            {player.board.E.length > 0 ? (
+              player.board.E.map((card, idx) => (
+                <div key={idx} className="asset-card-mini">
+                  <strong>{card.name}</strong><br/>
+                  ${card.value}M
+                </div>
+              ))
+            ) : (
+              <div className="empty-board-message">No assets yet</div>
+            )}
+          </div>
+
+          {/* Social */}
+          <div className={`board-area board-area-s player-board-area ${isSComplete ? 'board-complete' : ''}`}>
+            <div className="board-area-header">👥 Social ({player.board.S.length}/3) {isSComplete && "✅"}</div>
+            {player.board.S.length > 0 ? (
+              player.board.S.map((card, idx) => (
+                <div key={idx} className="asset-card-mini">
+                  <strong>{card.name}</strong><br/>
+                  ${card.value}M
+                </div>
+              ))
+            ) : (
+              <div className="empty-board-message">No assets yet</div>
+            )}
+          </div>
+
+          {/* Governance */}
+          <div className={`board-area board-area-g player-board-area ${isGComplete ? 'board-complete' : ''}`}>
+            <div className="board-area-header">⚖️ Governance ({player.board.G.length}/3) {isGComplete && "✅"}</div>
+            {player.board.G.length > 0 ? (
+              player.board.G.map((card, idx) => (
+                <div key={idx} className="asset-card-mini">
+                  <strong>{card.name}</strong><br/>
+                  ${card.value}M
+                </div>
+              ))
+            ) : (
+              <div className="empty-board-message">No assets yet</div>
+            )}
+          </div>
+        </div>
+
+        {/* Player's Hand */}
+        <div className="player-hand">
+          <h3 className="hand-header">Your Hand ({player.hand.length} cards - Max 7)</h3>
+          <div className="hand-cards">
+            {player.hand.map((card, index) => {
+              const isDisabled = !discarding && player.movesPlayed >= 3;
+              const isSelected = selectedCard === index;
+              
+              // Determine card CSS class
+              let cardClass = 'card';
+              if (card.type === 'Asset') {
+                if (card.category === 'Wild') cardClass += ' asset-wild';
+                else if (card.category.includes('Environment') || card.category === 'E') cardClass += ' asset-e';
+                else if (card.category.includes('Social') || card.category === 'S') cardClass += ' asset-s';
+                else if (card.category.includes('Governance') || card.category === 'G') cardClass += ' asset-g';
+              } else if (card.type === 'Action') {
+                cardClass += ' action';
+              } else if (card.type === 'Capital') {
+                cardClass += ' capital';
+              }
+              
+              if (isSelected) cardClass += ' selected';
+              if (isDisabled) cardClass += ' disabled';
+
+              return (
+                <div key={`${card.id}-${index}`} className={cardClass}>
+                  <div className="card-name">{card.name}</div>
+                  <div className="card-type">
+                    {card.type}
+                    {card.category && card.category !== "Neutral" && ` - ${card.category}`}
+                  </div>
+                  {card.value !== undefined && (
+                    <div className="card-value">${card.value}M</div>
+                  )}
+                  {card.effect && (
+                    <div className="card-effect">{card.effect}</div>
+                  )}
+                  
+                  <button
+                    onClick={() => discarding ? moves.discardCard(index) : handlePlayCard(index)}
+                    disabled={isDisabled}
+                    className={`card-button ${discarding ? 'discard' : 'play'}`}
+                  >
+                    {discarding ? "Discard" : "Play"}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* End Turn / Discard Warning */}
+        <div style={{ textAlign: 'center' }}>
+          {discarding && player.hand.length > 7 ? (
+            <div className="discard-warning">
+              <h3>⚠️ Hand Limit Exceeded!</h3>
+              <p>You have {player.hand.length} cards. You must discard down to 7 cards before ending your turn.</p>
+              <p style={{ fontWeight: 'bold' }}>Cards to discard: {player.hand.length - 7}</p>
+            </div>
+          ) : (
+            <button 
+              onClick={() => {
+                if (player.hand.length > 7) {
+                  setDiscarding(true);
+                } else {
+                  setDiscarding(false);
+                  moves.endTurn();
+                }
+              }}
+              className="end-turn-button"
+            >
+              End Turn
+            </button>
+          )}
+        </div>
+      </div>
       
       {/* Block Attack Popup - shows attacks at start of turn */}
       {hasAttacksToResolve && currentAttackIndex < myPendingAttacks.length && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.7)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: "white",
-            padding: "30px",
-            borderRadius: "12px",
-            maxWidth: "600px",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)"
-          }}>
-            <h2 style={{ color: "#d32f2f", marginTop: 0 }}>⚠️ Incoming Attack! ({currentAttackIndex + 1}/{myPendingAttacks.length})</h2>
-            <div style={{ margin: "20px 0", padding: "15px", backgroundColor: "#ffebee", borderRadius: "8px" }}>
-              <p style={{ margin: "5px 0" }}>
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2 className="modal-header" style={{ color: "#f44336" }}>⚠️ Incoming Attack! ({currentAttackIndex + 1}/{myPendingAttacks.length})</h2>
+            <div style={{ margin: "20px 0", padding: "15px", backgroundColor: "rgba(244, 67, 54, 0.2)", borderRadius: "8px", border: "1px solid #f44336" }}>
+              <p style={{ margin: "5px 0", color: "#fff" }}>
                 <strong>Attacker:</strong> Player {myPendingAttacks[currentAttackIndex].attackerId}
               </p>
-              <p style={{ margin: "5px 0" }}>
+              <p style={{ margin: "5px 0", color: "#fff" }}>
                 <strong>Attack Card:</strong> {myPendingAttacks[currentAttackIndex].card.name}
               </p>
-              <p style={{ margin: "5px 0", fontSize: "14px", color: "#666" }}>
+              <p style={{ margin: "5px 0", fontSize: "14px", color: "#bbb" }}>
                 {myPendingAttacks[currentAttackIndex].card.lesson || ""}
               </p>
             </div>
@@ -293,8 +565,8 @@ export function Board({ G, ctx, moves }) {
                         transition: "all 0.2s"
                       }}
                     >
-                      <div style={{ fontWeight: "bold", marginBottom: "5px" }}>{card.name}</div>
-                      <div style={{ fontSize: "13px", color: "#666" }}>{card.lesson || ""}</div>
+                      <div style={{ fontWeight: "bold", marginBottom: "5px", color: "#000" }}>{card.name}</div>
+                      <div style={{ fontSize: "13px", color: "#333" }}>{card.lesson || ""}</div>
                     </div>
                   ))}
                 </div>
@@ -397,522 +669,266 @@ export function Board({ G, ctx, moves }) {
       
       {/* Block Card Error Popup */}
       {showBlockError && (
-        <div style={{
-          position: "fixed",
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: "rgba(0, 0, 0, 0.7)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          zIndex: 1000
-        }}>
-          <div style={{
-            backgroundColor: "white",
-            padding: "30px",
-            borderRadius: "12px",
-            maxWidth: "400px",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
-            textAlign: "center"
-          }}>
-            <h2 style={{ color: "#ff9800", marginTop: 0 }}>🛡️ Can't Play Block Card</h2>
-            <p style={{ fontSize: "16px", color: "#666", margin: "20px 0" }}>
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: "400px", textAlign: "center" }}>
+            <h2 className="modal-header" style={{ color: "#ff9800" }}>🛡️ Can't Play Block Card</h2>
+            <p style={{ fontSize: "16px", color: "#bbb", margin: "20px 0" }}>
               Block cards can only be used to defend against incoming attacks. Wait until an opponent attacks you, then you'll have the option to block.
             </p>
             <button
               onClick={() => setShowBlockError(false)}
-              style={{
-                padding: "12px 24px",
-                backgroundColor: "#2196f3",
-                color: "white",
-                border: "none",
-                borderRadius: "6px",
-                cursor: "pointer",
-                fontSize: "16px",
-                fontWeight: "bold"
-              }}
+              className="modal-button modal-button-primary"
             >
               Got it!
             </button>
           </div>
         </div>
       )}
-      
-      {/* Opponent Info */}
-      <div style={{ marginBottom: "20px", padding: "15px", backgroundColor: "#f5f5f5", borderRadius: "8px" }}>
-        <h3>Opponent (Player {ctx.currentPlayer === "0" ? "1" : "0"})</h3>
-        <p>Bank: ${opponent.bank}M | Fines: ${opponent.fines}M | Hand: {opponent.hand.length} cards</p>
-        <div style={{ display: "flex", gap: "20px", marginTop: "10px" }}>
-          <div>
-            <strong>E Board:</strong> {opponent.board.E.length} assets
-            <div style={{ fontSize: "11px", color: "#666" }}>
-              {opponent.board.E.map(c => c.name).join(", ") || "None"}
-            </div>
-          </div>
-          <div>
-            <strong>S Board:</strong> {opponent.board.S.length} assets
-            <div style={{ fontSize: "11px", color: "#666" }}>
-              {opponent.board.S.map(c => c.name).join(", ") || "None"}
-            </div>
-          </div>
-          <div>
-            <strong>G Board:</strong> {opponent.board.G.length} assets
-            <div style={{ fontSize: "11px", color: "#666" }}>
-              {opponent.board.G.map(c => c.name).join(", ") || "None"}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Current Player Info */}
-      <div style={{ marginBottom: "20px", padding: "15px", backgroundColor: "#e3f2fd", borderRadius: "8px" }}>
-        <h2>Your Turn - Player {ctx.currentPlayer}</h2>
-        <p><strong>Bank:</strong> ${player.bank}M | <strong>Fines:</strong> ${player.fines}M
-          {player.fines > 0 && player.bank >= player.fines && (
-            <button 
-              onClick={() => moves.payFine(player.fines)}
-              style={{ marginLeft: "10px", padding: "5px 10px", backgroundColor: "#ff9800", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
-            >
-              Pay All Fines
-            </button>
-          )}
-        </p>
-        <p><strong>Turn:</strong> {ctx.turn} | <strong>Cards in Deck:</strong> {G.deck.length}</p>
-        <p><strong>Moves Played:</strong> {player.movesPlayed} / 3</p>
-      </div>
-
-      {/* Your Boards */}
-      <div style={{ marginBottom: "30px" }}>
-        <h3>Your ESG Framework</h3>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "15px" }}>
-          {/* E Board */}
-          <div style={{ padding: "15px", backgroundColor: "#e8f5e9", borderRadius: "8px", border: isEComplete ? "4px solid #4caf50" : "2px solid #4caf50", boxShadow: isEComplete ? "0 0 10px #4caf50" : "none" }}>
-            <h4 style={{ margin: "0 0 10px 0" }}>🌍 Environment ({player.board.E.length}/3) {isEComplete && "✅"}</h4>
-            {player.board.E.map((card, idx) => (
-              <div key={idx} style={{ fontSize: "12px", padding: "5px", backgroundColor: "white", marginBottom: "5px", borderRadius: "4px" }}>
-                {card.name} (${card.value}M)
-              </div>
-            ))}
-            {player.board.E.length === 0 && <div style={{ fontSize: "12px", color: "#666" }}>No assets yet</div>}
-          </div>
-          
-          {/* S Board */}
-          <div style={{ padding: "15px", backgroundColor: "#e3f2fd", borderRadius: "8px", border: isSComplete ? "4px solid #2196f3" : "2px solid #2196f3", boxShadow: isSComplete ? "0 0 10px #2196f3" : "none" }}>
-            <h4 style={{ margin: "0 0 10px 0" }}>👥 Social ({player.board.S.length}/3) {isSComplete && "✅"}</h4>
-            {player.board.S.map((card, idx) => (
-              <div key={idx} style={{ fontSize: "12px", padding: "5px", backgroundColor: "white", marginBottom: "5px", borderRadius: "4px" }}>
-                {card.name} (${card.value}M)
-              </div>
-            ))}
-            {player.board.S.length === 0 && <div style={{ fontSize: "12px", color: "#666" }}>No assets yet</div>}
-          </div>
-          
-          {/* G Board */}
-          <div style={{ padding: "15px", backgroundColor: "#fff9c4", borderRadius: "8px", border: isGComplete ? "4px solid #ffeb3b" : "2px solid #ffeb3b", boxShadow: isGComplete ? "0 0 10px #ffeb3b" : "none" }}>
-            <h4 style={{ margin: "0 0 10px 0" }}>⚖️ Governance ({player.board.G.length}/3) {isGComplete && "✅"}</h4>
-            {player.board.G.map((card, idx) => (
-              <div key={idx} style={{ fontSize: "12px", padding: "5px", backgroundColor: "white", marginBottom: "5px", borderRadius: "4px" }}>
-                {card.name} (${card.value}M)
-              </div>
-            ))}
-            {player.board.G.length === 0 && <div style={{ fontSize: "12px", color: "#666" }}>No assets yet</div>}
-          </div>
-        </div>
-      </div>
 
       {/* Wild Card Category Selection */}
       {selectedCard !== null && player.hand[selectedCard]?.category === "Wild" && (
-        <div style={{ marginBottom: "20px", padding: "15px", backgroundColor: "#ffe0b2", borderRadius: "8px", border: "2px solid #ff9800" }}>
-          <h4>Select Category for {player.hand[selectedCard].name}:</h4>
-          <div style={{ display: "flex", gap: "10px" }}>
-            <button onClick={() => handleWildCardPlacement("Environment")} style={{ padding: "10px 20px" }}>
-              🌍 Environment
-            </button>
-            <button onClick={() => handleWildCardPlacement("Social")} style={{ padding: "10px 20px" }}>
-              👥 Social
-            </button>
-            <button onClick={() => handleWildCardPlacement("Governance")} style={{ padding: "10px 20px" }}>
-              ⚖️ Governance
-            </button>
-            <button onClick={() => setSelectedCard(null)} style={{ padding: "10px 20px", backgroundColor: "#ccc" }}>
-              Cancel
-            </button>
+        <div className="modal-overlay">
+          <div className="modal-content selection-panel selection-panel-wild">
+            <h3 className="modal-header">Select Category for {player.hand[selectedCard].name}</h3>
+            <div className="selection-buttons">
+              <button onClick={() => handleWildCardPlacement("Environment")} className="selection-button" style={{ background: "#4caf50" }}>
+                🌍 Environment
+              </button>
+              <button onClick={() => handleWildCardPlacement("Social")} className="selection-button" style={{ background: "#2196f3" }}>
+                👥 Social
+              </button>
+              <button onClick={() => handleWildCardPlacement("Governance")} className="selection-button" style={{ background: "#fbc02d", color: "#000" }}>
+                ⚖️ Governance
+              </button>
+              <button onClick={() => setSelectedCard(null)} className="modal-button modal-button-cancel">
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Action Card Target Selection */}
       {selectedCard !== null && player.hand[selectedCard]?.type === "Action" && targetPlayer === null && (
-        <div style={{ marginBottom: "20px", padding: "15px", backgroundColor: "#ffcdd2", borderRadius: "8px", border: "2px solid #f44336" }}>
-          <h4>Play {player.hand[selectedCard].name} - Select Target Player:</h4>
-          <div style={{ display: "flex", gap: "10px" }}>
-            {Object.keys(G.players).map(playerId => {
-              if (playerId === ctx.currentPlayer) return null;
-              return (
-                <button 
-                  key={playerId}
-                  onClick={() => handleTargetSelection(playerId)} 
-                  style={{ padding: "10px 20px", backgroundColor: "#f44336", color: "white", border: "none", borderRadius: "4px", cursor: "pointer" }}
-                >
-                  Target Player {playerId}
-                </button>
-              );
-            })}
-            <button onClick={() => { setSelectedCard(null); setSelectingAsset(false); setTargetPlayer(null); }} style={{ padding: "10px 20px", backgroundColor: "#ccc" }}>
-              Cancel
-            </button>
+        <div className="modal-overlay">
+          <div className="modal-content selection-panel selection-panel-action">
+            <h3 className="modal-header">Play {player.hand[selectedCard].name} - Select Target Player</h3>
+            <div className="selection-buttons">
+              {Object.keys(G.players).map(playerId => {
+                if (playerId === ctx.currentPlayer) return null;
+                return (
+                  <button 
+                    key={playerId}
+                    onClick={() => handleTargetSelection(playerId)} 
+                    className="modal-button modal-button-secondary"
+                  >
+                    Target Player {playerId}
+                  </button>
+                );
+              })}
+              <button onClick={() => { setSelectedCard(null); setSelectingAsset(false); setTargetPlayer(null); }} className="modal-button modal-button-cancel">
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}
 
       {/* Set Selection UI for steal-set */}
       {selectingSet && selectedCard !== null && targetPlayer !== null && (
-        <div style={{ marginBottom: "20px", padding: "15px", backgroundColor: "#fff3e0", borderRadius: "8px", border: "3px solid #ff9800" }}>
-          <h3 style={{ marginTop: 0, color: "#e65100" }}>🎯 Hostile Takeover - Select Which Set to Steal</h3>
-          <p style={{ color: "#666" }}>Player {targetPlayer} has the following complete sets (3+ assets):</p>
-          <div style={{ display: "flex", gap: "15px", marginTop: "15px", flexWrap: "wrap" }}>
-            {availableSets.map(category => {
-              const categoryName = category === "E" ? "Environment 🌍" : category === "S" ? "Social 👥" : "Governance ⚖️";
-              const categoryColor = category === "E" ? "#4caf50" : category === "S" ? "#2196f3" : "#ffeb3b";
-              const assetCount = G.players[targetPlayer].board[category].length;
-              
-              return (
-                <button
-                  key={category}
-                  onClick={() => handleSetSelection(category)}
-                  style={{
-                    padding: "20px 30px",
-                    backgroundColor: categoryColor,
-                    color: category === "G" ? "#000" : "#fff",
-                    border: "none",
-                    borderRadius: "8px",
-                    cursor: "pointer",
-                    fontSize: "16px",
-                    fontWeight: "bold",
-                    boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
-                    transition: "transform 0.2s",
-                  }}
-                  onMouseEnter={(e) => e.target.style.transform = "scale(1.05)"}
-                  onMouseLeave={(e) => e.target.style.transform = "scale(1)"}
-                >
-                  Steal {categoryName}<br/>
-                  <span style={{ fontSize: "14px" }}>({assetCount} assets)</span>
-                </button>
-              );
-            })}
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3 className="modal-header" style={{ color: "#ff9800" }}>🎯 Hostile Takeover - Select Which Set to Steal</h3>
+            <p style={{ color: "#bbb" }}>Player {targetPlayer} has the following complete sets (3+ assets):</p>
+            <div className="selection-buttons">
+              {availableSets.map(category => {
+                const categoryName = category === "E" ? "Environment 🌍" : category === "S" ? "Social 👥" : "Governance ⚖️";
+                const categoryColor = category === "E" ? "#4caf50" : category === "S" ? "#2196f3" : "#fbc02d";
+                const assetCount = G.players[targetPlayer].board[category].length;
+                
+                return (
+                  <button
+                    key={category}
+                    onClick={() => handleSetSelection(category)}
+                    className="selection-button"
+                    style={{
+                      backgroundColor: categoryColor,
+                      color: category === "G" ? "#000" : "#fff",
+                      padding: "20px 30px",
+                      fontSize: "16px",
+                    }}
+                  >
+                    Steal {categoryName}<br/>
+                    <span style={{ fontSize: "14px" }}>({assetCount} assets)</span>
+                  </button>
+                );
+              })}
+            </div>
+            <button 
+              onClick={handleCancelSetSelection}
+              className="modal-button modal-button-cancel"
+              style={{ marginTop: "15px" }}
+            >
+              ❌ Cancel (Don't Play Card)
+            </button>
           </div>
-          <button 
-            onClick={handleCancelSetSelection}
-            style={{
-              marginTop: "15px",
-              padding: "12px 24px",
-              backgroundColor: "#ccc",
-              color: "#000",
-              border: "none",
-              borderRadius: "6px",
-              cursor: "pointer",
-              fontSize: "14px",
-              fontWeight: "bold"
-            }}
-          >
-            ❌ Cancel (Don't Play Card)
-          </button>
         </div>
       )}
 
       {/* Asset Selection UI - Opponent's Assets */}
       {selectedCard !== null && targetPlayer !== null && selectingAsset && (
-        <div style={{ marginBottom: "20px", padding: "15px", backgroundColor: "#ffebee", borderRadius: "8px", border: "2px solid #f44336" }}>
-          <h4>Select which asset to {player.hand[selectedCard].effect === "swap-asset" ? "take" : "discard"} from Player {targetPlayer}:</h4>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "15px", marginTop: "10px" }}>
-            {/* E Board */}
-            <div>
-              <h5 style={{ margin: "0 0 10px 0" }}>🌍 Environment</h5>
-              {G.players[targetPlayer].board.E.map((asset, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => handleOpponentAssetSelection("E", idx)}
-                  style={{
-                    fontSize: "12px",
-                    padding: "8px",
-                    backgroundColor: "#e8f5e9",
-                    marginBottom: "5px",
-                    borderRadius: "4px",
-                    border: "2px solid #4caf50",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={(e) => e.target.style.transform = "scale(1.05)"}
-                  onMouseLeave={(e) => e.target.style.transform = "scale(1)"}
-                >
-                  {asset.name} (${asset.value}M)
-                </div>
-              ))}
-              {G.players[targetPlayer].board.E.length === 0 && <div style={{ fontSize: "12px", color: "#999" }}>No assets</div>}
-            </div>
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: "800px" }}>
+            <h3 className="modal-header">Select which asset to {player.hand[selectedCard].effect === "swap-asset" ? "take" : "discard"} from Player {targetPlayer}</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "15px", marginTop: "15px" }}>
+              {/* E Board */}
+              <div>
+                <h5 style={{ margin: "0 0 10px 0", color: "#4caf50" }}>🌍 Environment</h5>
+                {G.players[targetPlayer].board.E.map((asset, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => handleOpponentAssetSelection("E", idx)}
+                    className="asset-card-mini"
+                    style={{
+                      cursor: "pointer",
+                      border: "1px solid #4caf50",
+                    }}
+                  >
+                    <strong>{asset.name}</strong><br/>${asset.value}M
+                  </div>
+                ))}
+                {G.players[targetPlayer].board.E.length === 0 && <div className="empty-board-message">No assets</div>}
+              </div>
 
-            {/* S Board */}
-            <div>
-              <h5 style={{ margin: "0 0 10px 0" }}>👥 Social</h5>
-              {G.players[targetPlayer].board.S.map((asset, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => handleOpponentAssetSelection("S", idx)}
-                  style={{
-                    fontSize: "12px",
-                    padding: "8px",
-                    backgroundColor: "#e3f2fd",
-                    marginBottom: "5px",
-                    borderRadius: "4px",
-                    border: "2px solid #2196f3",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={(e) => e.target.style.transform = "scale(1.05)"}
-                  onMouseLeave={(e) => e.target.style.transform = "scale(1)"}
-                >
-                  {asset.name} (${asset.value}M)
-                </div>
-              ))}
-              {G.players[targetPlayer].board.S.length === 0 && <div style={{ fontSize: "12px", color: "#999" }}>No assets</div>}
-            </div>
+              {/* S Board */}
+              <div>
+                <h5 style={{ margin: "0 0 10px 0", color: "#2196f3" }}>👥 Social</h5>
+                {G.players[targetPlayer].board.S.map((asset, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => handleOpponentAssetSelection("S", idx)}
+                    className="asset-card-mini"
+                    style={{
+                      cursor: "pointer",
+                      border: "1px solid #2196f3",
+                    }}
+                  >
+                    <strong>{asset.name}</strong><br/>${asset.value}M
+                  </div>
+                ))}
+                {G.players[targetPlayer].board.S.length === 0 && <div className="empty-board-message">No assets</div>}
+              </div>
 
-            {/* G Board */}
-            <div>
-              <h5 style={{ margin: "0 0 10px 0" }}>⚖️ Governance</h5>
-              {G.players[targetPlayer].board.G.map((asset, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => handleOpponentAssetSelection("G", idx)}
-                  style={{
-                    fontSize: "12px",
-                    padding: "8px",
-                    backgroundColor: "#fff9c4",
-                    marginBottom: "5px",
-                    borderRadius: "4px",
-                    border: "2px solid #ffeb3b",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={(e) => e.target.style.transform = "scale(1.05)"}
-                  onMouseLeave={(e) => e.target.style.transform = "scale(1)"}
-                >
-                  {asset.name} (${asset.value}M)
-                </div>
-              ))}
-              {G.players[targetPlayer].board.G.length === 0 && <div style={{ fontSize: "12px", color: "#999" }}>No assets</div>}
+              {/* G Board */}
+              <div>
+                <h5 style={{ margin: "0 0 10px 0", color: "#fbc02d" }}>⚖️ Governance</h5>
+                {G.players[targetPlayer].board.G.map((asset, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => handleOpponentAssetSelection("G", idx)}
+                    className="asset-card-mini"
+                    style={{
+                      cursor: "pointer",
+                      border: "1px solid #fbc02d",
+                    }}
+                  >
+                    <strong>{asset.name}</strong><br/>${asset.value}M
+                  </div>
+                ))}
+                {G.players[targetPlayer].board.G.length === 0 && <div className="empty-board-message">No assets</div>}
+              </div>
             </div>
+            <button 
+              onClick={() => { setSelectedCard(null); setTargetPlayer(null); setSelectingAsset(false); }} 
+              className="modal-button modal-button-cancel"
+              style={{ marginTop: "15px" }}
+            >
+              Cancel
+            </button>
           </div>
-          <button 
-            onClick={() => { setSelectedCard(null); setTargetPlayer(null); setSelectingAsset(false); }} 
-            style={{ marginTop: "15px", padding: "10px 20px", backgroundColor: "#ccc" }}
-          >
-            Cancel
-          </button>
         </div>
       )}
 
       {/* Asset Selection UI - Your Assets (for swap) */}
       {selectedCard !== null && selectingYourAsset && selectedOpponentAsset !== null && (
-        <div style={{ marginBottom: "20px", padding: "15px", backgroundColor: "#e8f5e9", borderRadius: "8px", border: "2px solid #4caf50" }}>
-          <h4>Now select which of YOUR assets to give in exchange:</h4>
-          <p style={{ fontSize: "12px", color: "#666", marginBottom: "10px" }}>
-            You're taking: {G.players[targetPlayer].board[selectedOpponentAsset.category][selectedOpponentAsset.assetIndex].name}
-          </p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "15px", marginTop: "10px" }}>
-            {/* E Board */}
-            <div>
-              <h5 style={{ margin: "0 0 10px 0" }}>🌍 Environment</h5>
-              {player.board.E.map((asset, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => handleYourAssetSelection("E", idx)}
-                  style={{
-                    fontSize: "12px",
-                    padding: "8px",
-                    backgroundColor: "#e8f5e9",
-                    marginBottom: "5px",
-                    borderRadius: "4px",
-                    border: "2px solid #4caf50",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={(e) => e.target.style.transform = "scale(1.05)"}
-                  onMouseLeave={(e) => e.target.style.transform = "scale(1)"}
-                >
-                  {asset.name} (${asset.value}M)
-                </div>
-              ))}
-              {player.board.E.length === 0 && <div style={{ fontSize: "12px", color: "#999" }}>No assets</div>}
-            </div>
+        <div className="modal-overlay">
+          <div className="modal-content selection-panel selection-panel-swap" style={{ maxWidth: "800px" }}>
+            <h3 className="modal-header">Now select which of YOUR assets to give in exchange</h3>
+            <p style={{ fontSize: "14px", color: "#bbb", marginBottom: "10px" }}>
+              You're taking: <strong>{G.players[targetPlayer].board[selectedOpponentAsset.category][selectedOpponentAsset.assetIndex].name}</strong>
+            </p>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "15px", marginTop: "15px" }}>
+              {/* E Board */}
+              <div>
+                <h5 style={{ margin: "0 0 10px 0", color: "#4caf50" }}>🌍 Environment</h5>
+                {player.board.E.map((asset, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => handleYourAssetSelection("E", idx)}
+                    className="asset-card-mini"
+                    style={{
+                      cursor: "pointer",
+                      border: "1px solid #4caf50",
+                    }}
+                  >
+                    <strong>{asset.name}</strong><br/>${asset.value}M
+                  </div>
+                ))}
+                {player.board.E.length === 0 && <div className="empty-board-message">No assets</div>}
+              </div>
 
-            {/* S Board */}
-            <div>
-              <h5 style={{ margin: "0 0 10px 0" }}>👥 Social</h5>
-              {player.board.S.map((asset, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => handleYourAssetSelection("S", idx)}
-                  style={{
-                    fontSize: "12px",
-                    padding: "8px",
-                    backgroundColor: "#e3f2fd",
-                    marginBottom: "5px",
-                    borderRadius: "4px",
-                    border: "2px solid #2196f3",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={(e) => e.target.style.transform = "scale(1.05)"}
-                  onMouseLeave={(e) => e.target.style.transform = "scale(1)"}
-                >
-                  {asset.name} (${asset.value}M)
-                </div>
-              ))}
-              {player.board.S.length === 0 && <div style={{ fontSize: "12px", color: "#999" }}>No assets</div>}
-            </div>
+              {/* S Board */}
+              <div>
+                <h5 style={{ margin: "0 0 10px 0", color: "#2196f3" }}>👥 Social</h5>
+                {player.board.S.map((asset, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => handleYourAssetSelection("S", idx)}
+                    className="asset-card-mini"
+                    style={{
+                      cursor: "pointer",
+                      border: "1px solid #2196f3",
+                    }}
+                  >
+                    <strong>{asset.name}</strong><br/>${asset.value}M
+                  </div>
+                ))}
+                {player.board.S.length === 0 && <div className="empty-board-message">No assets</div>}
+              </div>
 
-            {/* G Board */}
-            <div>
-              <h5 style={{ margin: "0 0 10px 0" }}>⚖️ Governance</h5>
-              {player.board.G.map((asset, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => handleYourAssetSelection("G", idx)}
-                  style={{
-                    fontSize: "12px",
-                    padding: "8px",
-                    backgroundColor: "#fff9c4",
-                    marginBottom: "5px",
-                    borderRadius: "4px",
-                    border: "2px solid #ffeb3b",
-                    cursor: "pointer",
-                    transition: "all 0.2s",
-                  }}
-                  onMouseEnter={(e) => e.target.style.transform = "scale(1.05)"}
-                  onMouseLeave={(e) => e.target.style.transform = "scale(1)"}
-                >
-                  {asset.name} (${asset.value}M)
-                </div>
-              ))}
-              {player.board.G.length === 0 && <div style={{ fontSize: "12px", color: "#999" }}>No assets</div>}
+              {/* G Board */}
+              <div>
+                <h5 style={{ margin: "0 0 10px 0", color: "#fbc02d" }}>⚖️ Governance</h5>
+                {player.board.G.map((asset, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => handleYourAssetSelection("G", idx)}
+                    className="asset-card-mini"
+                    style={{
+                      cursor: "pointer",
+                      border: "1px solid #fbc02d",
+                    }}
+                  >
+                    <strong>{asset.name}</strong><br/>${asset.value}M
+                  </div>
+                ))}
+                {player.board.G.length === 0 && <div className="empty-board-message">No assets</div>}
+              </div>
             </div>
+            <button 
+              onClick={() => { setSelectedCard(null); setTargetPlayer(null); setSelectingYourAsset(false); setSelectedOpponentAsset(null); }} 
+              className="modal-button modal-button-cancel"
+              style={{ marginTop: "15px" }}
+            >
+              Cancel
+            </button>
           </div>
-          <button 
-            onClick={() => { setSelectedCard(null); setTargetPlayer(null); setSelectingYourAsset(false); setSelectedOpponentAsset(null); }} 
-            style={{ marginTop: "15px", padding: "10px 20px", backgroundColor: "#ccc" }}
-          >
-            Cancel
-          </button>
         </div>
       )}
 
-      {/* Your Hand */}
-      <div style={{ marginTop: "20px" }}>
-        <h3>Your Hand ({player.hand.length} cards - Max 7)</h3>
-        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-          {player.hand.map((card, index) => (
-            <div
-              key={`${card.id}-${index}`}
-              style={{
-                border: selectedCard === index ? "3px solid #ff9800" : "2px solid #333",
-                borderRadius: "8px",
-                padding: "10px",
-                width: "150px",
-                backgroundColor: 
-                  card.type === "Asset" ? "#e8f5e9" :
-                  card.type === "Capital" ? "#fff9c4" : "#e3f2fd",
-                cursor: player.movesPlayed < 3 ? "pointer" : "not-allowed",
-                opacity: player.movesPlayed < 3 ? 1 : 0.5,
-              }}
-            >
-              <div style={{ fontWeight: "bold", fontSize: "14px" }}>
-                {card.name}
-              </div>
-              <div style={{ fontSize: "12px", color: "#666", marginTop: "5px" }}>
-                {card.type}
-                {card.category && card.category !== "Neutral" && ` - ${card.category}`}
-              </div>
-              {card.value !== undefined && (
-                <div style={{ fontSize: "12px", color: "#388e3c", fontWeight: "bold" }}>
-                  ${card.value}M
-                </div>
-              )}
-              {card.effect && (
-                <div style={{ fontSize: "11px", color: "#d32f2f", marginTop: "3px" }}>
-                  {card.effect}
-                </div>
-              )}
-              
-              <button
-                onClick={() => discarding ? moves.discardCard(index) : handlePlayCard(index)}
-                disabled={!discarding && player.movesPlayed >= 3}
-                style={{
-                  marginTop: "8px",
-                  padding: "5px 10px",
-                  width: "100%",
-                  backgroundColor: discarding ? "#f44336" : (player.movesPlayed < 3 ? "#4caf50" : "#ccc"),
-                  color: "white",
-                  border: "none",
-                  borderRadius: "4px",
-                  cursor: discarding || player.movesPlayed < 3 ? "pointer" : "not-allowed",
-                  fontSize: "12px",
-                  fontWeight: "bold",
-                }}
-              >
-                {discarding ? "Discard" : "Play"}
-              </button>
-            </div>
-          ))}
-        </div>
-      </div>
+      {/* Your Hand - REMOVED FROM HERE - Now in player-area above */}
 
-      {/* End Turn Button */}
-      <div style={{ marginTop: "30px" }}>
-        {discarding && player.hand.length > 7 ? (
-          <div style={{ 
-            padding: "15px", 
-            backgroundColor: "#ffebee", 
-            borderRadius: "8px", 
-            border: "2px solid #f44336"
-          }}>
-            <h3 style={{ margin: "0 0 10px 0", color: "#d32f2f" }}>⚠️ Hand Limit Exceeded!</h3>
-            <p style={{ margin: "5px 0", fontSize: "14px" }}>
-              You have {player.hand.length} cards. You must discard down to 7 cards before ending your turn.
-            </p>
-            <p style={{ margin: "5px 0", fontSize: "14px", fontWeight: "bold" }}>
-              Cards to discard: {player.hand.length - 7}
-            </p>
-          </div>
-        ) : (
-          <button 
-            onClick={() => {
-              if (player.hand.length > 7) {
-                // Hand over limit - activate discard mode
-                setDiscarding(true);
-              } else {
-                // Hand is fine - end turn and reset discard mode
-                setDiscarding(false);
-                moves.endTurn();
-              }
-            }}
-            style={{
-              padding: "15px 30px",
-              fontSize: "16px",
-              fontWeight: "bold",
-              backgroundColor: "#2196f3",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              cursor: "pointer",
-            }}
-          >
-            End Turn
-          </button>
-        )}
-      </div>
+      {/* End Turn Button - REMOVED FROM HERE - Now in player-area above */}
     </div>
   );
 }

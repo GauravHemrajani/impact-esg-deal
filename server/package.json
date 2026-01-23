@@ -1,0 +1,15 @@
+{
+  "name": "impact-esg-server",
+  "version": "1.0.0",
+  "description": "Boardgame.io server for Impact ESG Deal",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "boardgame.io": "^0.50.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
