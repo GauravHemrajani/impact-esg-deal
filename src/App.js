@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { db } from "./firebase";
-import { collection, addDoc } from "firebase/firestore";
 import { Client } from "boardgame.io/react";
 import { SocketIO } from 'boardgame.io/multiplayer';
 import { ImpactGame } from "./Game";
 import { Board } from "./Board";
 import { LobbyLanding } from "./LobbyLanding";
+import { WaitingRoom } from "./WaitingRoom";
 
 const serverURL = process.env.REACT_APP_SERVER_URL || 'http://localhost:8000';
 
@@ -19,6 +18,8 @@ const GameClient = Client({
 export default function App() {
   const [gameState, setGameState] = useState({
     inLobby: true,
+    inWaitingRoom: false,
+    inGame: false,
     matchID: null,
     playerID: null,
     playerName: null,
@@ -28,16 +29,51 @@ export default function App() {
   const handleJoinGame = (gameInfo) => {
     setGameState({
       inLobby: false,
+      inWaitingRoom: true,
+      inGame: false,
       ...gameInfo,
     });
   };
 
-  // Show landing page if in lobby
+  const handleStartGame = () => {
+    setGameState(prev => ({
+      ...prev,
+      inWaitingRoom: false,
+      inGame: true,
+    }));
+  };
+
+  const handleLeaveLobby = () => {
+    setGameState({
+      inLobby: true,
+      inWaitingRoom: false,
+      inGame: false,
+      matchID: null,
+      playerID: null,
+      playerName: null,
+      credentials: null,
+    });
+  };
+
+  // Show landing page
   if (gameState.inLobby) {
     return <LobbyLanding onJoinGame={handleJoinGame} />;
   }
 
-  // Show game once player joins
+  // Show waiting room
+  if (gameState.inWaitingRoom) {
+    return (
+      <WaitingRoom 
+        matchID={gameState.matchID}
+        playerID={gameState.playerID}
+        playerName={gameState.playerName}
+        onStartGame={handleStartGame}
+        onLeave={handleLeaveLobby}
+      />
+    );
+  }
+
+  // Show game
   return (
     <div>
       <GameClient 
