@@ -70,6 +70,12 @@ export function WaitingRoom({ matchID, playerID, playerName, onStartGame, onLeav
       if (isHost) {
         // Host leaving - delete entire lobby
         await deleteDoc(doc(db, 'lobbies', matchID));
+      } else {
+        // Non-host leaving - remove from players list
+        const updatedPlayers = lobby.players.filter(p => p.id !== playerID);
+        await updateDoc(doc(db, 'lobbies', matchID), {
+          players: updatedPlayers,
+        });
       }
       onLeave();
     } catch (err) {
