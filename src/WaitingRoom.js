@@ -19,8 +19,8 @@ export function WaitingRoom({ matchID, playerID, playerName, onStartGame, onLeav
           setLoading(false);
 
           // Auto-start if both players ready and game started
-          if (data.status === 'playing') {
-            onStartGame();
+          if (data.status === 'playing' && data.serverMatchID) {
+            onStartGame(data.serverMatchID);
           }
         } else {
           // Lobby deleted (host left) - kick everyone out
@@ -56,16 +56,36 @@ export function WaitingRoom({ matchID, playerID, playerName, onStartGame, onLeav
   };
 
   const startGame = async () => {
+    setError('');
     try {
-      // Update Firebase with playing status
-      // boardgame.io will auto-create match when clients connect with matchID
+      const serverURL = process.env.REACT_APP_SERVER_URL || 'http://localhost:8000';
+      
+      // Create match on boardgame.io server
+      const createResponse = await fetch(`${serverURL}/games/ImpactGame/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          numPlayers: 2,
+        }),
+      });
+
+      if (!createResponse.ok) {
+        const errorText = await createResponse.text();
+        throw new Error(`Server error: ${createResponse.status} - ${errorText}`);
+      }
+
+      const { matchID: serverMatchID } = await createResponse.json();
+      
+      // Update Firebase with server match ID and playing status
       await updateDoc(doc(db, 'lobbies', matchID), {
         status: 'playing',
+        serverMatchID,
       });
       
       onStartGame();
     } catch (err) {
       setError('Failed to start game: ' + err.message);
+      console.error('Match creation error:', err);
     }
   };
 
