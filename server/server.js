@@ -12,6 +12,9 @@ const server = Server({
 
 const PORT = process.env.PORT || 8000;
 
-server.run(PORT, () => {
-  console.log(`🎮 Boardgame.io server running on port ${PORT}`);
-});
+const lobbyConfig = {
+  apiPort: PORT,
+  apiCallback: () => console.log(`🎮 Lobby API running on port ${PORT}`),
+};
+
+server.run(lobbyConfig);
