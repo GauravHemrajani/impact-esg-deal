@@ -71,16 +71,17 @@ export function WaitingRoom({ matchID, playerID, playerName, onStartGame, onLeav
     
     try {
       if (isHost) {
-        // Host leaving - delete entire lobby
+        // Host leaving - delete entire lobby and leave immediately
         await deleteDoc(doc(db, 'lobbies', matchID));
+        onLeave(); // Leave immediately, don't wait for snapshot
       } else {
         // Non-host leaving - remove from players list
         const updatedPlayers = lobby.players.filter(p => p.id !== playerID);
         await updateDoc(doc(db, 'lobbies', matchID), {
           players: updatedPlayers,
         });
+        onLeave();
       }
-      onLeave();
     } catch (err) {
       console.error('Error leaving lobby:', err);
       onLeave(); // Leave anyway
