@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { db } from './firebase';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, deleteDoc } from 'firebase/firestore';
 
 export function WaitingRoom({ matchID, playerID, playerName, onStartGame, onLeave }) {
   const [lobby, setLobby] = useState(null);
@@ -22,8 +22,11 @@ export function WaitingRoom({ matchID, playerID, playerName, onStartGame, onLeav
             onStartGame();
           }
         } else {
-          setError('Lobby not found');
+          // Lobby deleted (host left) - kick everyone out
           setLoading(false);
+          setTimeout(() => {
+            onLeave();
+          }, 2000);
         }
       },
       (err) => {
@@ -33,7 +36,7 @@ export function WaitingRoom({ matchID, playerID, playerName, onStartGame, onLeav
     );
 
     return () => unsubscribe();
-  }, [matchID, onStartGame]);
+  }, [matchID, onStartGame, onLeave]);
 
   const toggleReady = async () => {
     try {
@@ -60,6 +63,21 @@ export function WaitingRoom({ matchID, playerID, playerName, onStartGame, onLeav
     }
   };
 
+  const handleLeave = async () => {
+    const isHost = playerID === '0';
+    
+    try {
+      if (isHost) {
+        // Host leaving - delete entire lobby
+        await deleteDoc(doc(db, 'lobbies', matchID));
+      }
+      onLeave();
+    } catch (err) {
+      console.error('Error leaving lobby:', err);
+      onLeave(); // Leave anyway
+    }
+  };
+
   if (loading) {
     return (
       <div style={{
@@ -72,6 +90,27 @@ export function WaitingRoom({ matchID, playerID, playerName, onStartGame, onLeav
         fontSize: '24px',
       }}>
         Loading lobby...
+      </div>
+    );
+  }
+
+  // If lobby doesn't exist, show disbanded message
+  if (!lobby) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        flexDirection: 'column',
+        gap: '20px',
+        color: 'white',
+      }}>
+        <div style={{ fontSize: '48px' }}>👋</div>
+        <div style={{ fontSize: '24px', fontWeight: 'bold' }}>Lobby Disbanded</div>
+        <div style={{ fontSize: '16px', opacity: 0.9 }}>The host has left the game</div>
+        <div style={{ fontSize: '14px', opacity: 0.7 }}>Returning to lobby...</div>
       </div>
     );
   }
@@ -300,7 +339,7 @@ export function WaitingRoom({ matchID, playerID, playerName, onStartGame, onLeav
           )}
 
           <button
-            onClick={onLeave}
+            onClick={handleLeave}
             style={{
               padding: '15px 25px',
               fontSize: '16px',
