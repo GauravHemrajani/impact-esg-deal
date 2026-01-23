@@ -37,7 +37,7 @@ export function LobbyLanding({ onJoinGame }) {
         matchID,
         playerID: '0',
         playerName,
-        credentials: matchID + '-0',
+        credentials: `${matchID}-player0-${Date.now()}`,
       });
     } catch (err) {
       setError('Failed to create game: ' + err.message);
@@ -87,7 +87,7 @@ export function LobbyLanding({ onJoinGame }) {
         matchID: lobbyCode.toUpperCase(),
         playerID: '1',
         playerName,
-        credentials: lobbyCode.toUpperCase() + '-1',
+        credentials: `${lobbyCode.toUpperCase()}-player1-${Date.now()}`,
       });
     } catch (err) {
       setError('Failed to join game: ' + err.message);
