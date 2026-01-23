@@ -23,6 +23,7 @@ export function WaitingRoom({ matchID, playerID, playerName, onStartGame, onLeav
           }
         } else {
           // Lobby deleted (host left) - kick everyone out
+          setLobby(null);
           setLoading(false);
           setTimeout(() => {
             onLeave();
