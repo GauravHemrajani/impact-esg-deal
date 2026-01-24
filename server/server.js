@@ -8,6 +8,7 @@ const server = Server({
     'https://impact-esg-deal.vercel.app',
     /\.vercel\.app$/,
   ],
+  authenticateCredentials: async () => true, // Disable auth for testing
 });
 
 const PORT = process.env.PORT || 8000;
