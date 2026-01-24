@@ -151,6 +151,9 @@ function executeAction(G, ctx, card, cardIndex, targetPlayer, targetAssetCategor
 }
 
 export const ImpactGame = {
+  minPlayers: 2,
+  maxPlayers: 2,
+  
   setup: () => {
     const shuffledDeck = shuffleDeck(DECK);
     

@@ -58,23 +58,7 @@ export function WaitingRoom({ matchID, playerID, playerName, onStartGame, onLeav
   const startGame = async () => {
     setError('');
     try {
-      // First, create match on boardgame.io server using internal API
-      const serverURL = process.env.REACT_APP_SERVER_URL || 'http://localhost:8000';
-      
-      const response = await fetch(`${serverURL}/games/ImpactGame/${matchID}/join`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          playerID: '0',
-          playerName: lobby.host,
-        }),
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.status}`);
-      }
-      
-      // Update Firebase status
+      // Update Firebase status - match will be auto-created on first client connect
       await updateDoc(doc(db, 'lobbies', matchID), {
         status: 'playing',
       });
