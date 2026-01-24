@@ -1,10 +1,10 @@
-const { Server, Origins } = require('boardgame.io/server');
+const { Server } = require('boardgame.io/server');
 const { ImpactGame } = require('../src/Game');
 
 const server = Server({ 
   games: [ImpactGame],
   origins: [
-    Origins.LOCALHOST,
+    'http://localhost:3000',
     'https://impact-esg-deal.vercel.app',
     /\.vercel\.app$/,
   ],
