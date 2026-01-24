@@ -23,7 +23,6 @@ export default function App() {
     matchID: null,
     playerID: null,
     playerName: null,
-    credentials: null,
   });
 
   const handleJoinGame = (gameInfo) => {
@@ -51,7 +50,6 @@ export default function App() {
       matchID: null,
       playerID: null,
       playerName: null,
-      credentials: null,
     });
   };
 
@@ -79,7 +77,6 @@ export default function App() {
       <GameClient 
         matchID={gameState.matchID}
         playerID={gameState.playerID}
-        credentials={gameState.credentials}
       />
     </div>
   );
