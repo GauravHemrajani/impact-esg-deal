@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "./Board.css";
 
-export function Board({ G, ctx, moves }) {
+export function Board({ G, ctx, moves, playerID }) {
   const [selectedCard, setSelectedCard] = useState(null);
   const [targetCategory, setTargetCategory] = useState(null);
   const [targetPlayer, setTargetPlayer] = useState(null);
@@ -17,21 +17,22 @@ export function Board({ G, ctx, moves }) {
   
   // Auto-exit discard mode when hand reaches 7 or fewer cards
   useEffect(() => {
-    if (discarding && G.players[ctx.currentPlayer]?.hand?.length <= 7) {
+    if (discarding && G.players[playerID]?.hand?.length <= 7) {
       setDiscarding(false);
     }
-  }, [G.players[ctx.currentPlayer]?.hand?.length, discarding, ctx.currentPlayer]);
+  }, [G.players[playerID]?.hand?.length, discarding, playerID]);
   
   if (!ctx) {
     return <div>Loading...</div>;
   }
   
-  const player = G.players[ctx.currentPlayer];
-  const opponent = G.players[ctx.currentPlayer === "0" ? "1" : "0"];
+  // Use playerID to show this client's own cards and board
+  const player = G.players[playerID];
+  const opponent = G.players[playerID === "0" ? "1" : "0"];
   
-  // Check if there are pending attacks targeting current player
+  // Check if there are pending attacks targeting this player
   const myPendingAttacks = G.pendingAttacks.filter(attack => 
-    attack.targetId === ctx.currentPlayer && !attack.blocked && !attack.processed
+    attack.targetId === playerID && !attack.blocked && !attack.processed
   );
   const hasAttacksToResolve = myPendingAttacks.length > 0;
   
@@ -70,6 +71,11 @@ export function Board({ G, ctx, moves }) {
   };
 
   const handlePlayCard = (cardIndex) => {
+    // Don't allow playing cards when it's not your turn
+    if (ctx.currentPlayer !== playerID) {
+      return;
+    }
+    
     const card = player.hand[cardIndex];
     
     // Block cards can only be used reactively when there's an incoming attack
@@ -507,7 +513,25 @@ export function Board({ G, ctx, moves }) {
 
         {/* End Turn / Discard Warning */}
         <div style={{ textAlign: 'center' }}>
-          {discarding && player.hand.length > 7 ? (
+          {/* Show whose turn it is */}
+          <div style={{ 
+            marginBottom: '10px', 
+            fontSize: '18px', 
+            fontWeight: 'bold',
+            color: ctx.currentPlayer === playerID ? '#4caf50' : '#ff9800'
+          }}>
+            {ctx.currentPlayer === playerID ? "🎯 Your Turn!" : "⏳ Waiting for opponent..."}
+          </div>
+          
+          {ctx.currentPlayer !== playerID ? (
+            <button 
+              disabled
+              className="end-turn-button"
+              style={{ opacity: 0.5, cursor: 'not-allowed' }}
+            >
+              Opponent's Turn
+            </button>
+          ) : discarding && player.hand.length > 7 ? (
             <div className="discard-warning">
               <h3>⚠️ Hand Limit Exceeded!</h3>
               <p>You have {player.hand.length} cards. You must discard down to 7 cards before ending your turn.</p>
