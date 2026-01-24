@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Boardgame.io server for Impact ESG Deal",
   "main": "server.js",
+  "type": "module",
   "scripts": {
     "start": "node server.js"
   },

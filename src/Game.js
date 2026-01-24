@@ -1,4 +1,4 @@
-import { DECK, shuffleDeck } from "./cards";
+import { DECK, shuffleDeck } from "./cards.js";
 
 // Helper function to check if a set is complete
 function isSetComplete(assets) {

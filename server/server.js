@@ -1,5 +1,5 @@
-const { Server } = require('boardgame.io/server');
-const { ImpactGame } = require('../src/Game');
+import { Server } from 'boardgame.io/dist/cjs/server.js';
+import { ImpactGame } from '../src/Game.js';
 
 const server = Server({ 
   games: [ImpactGame],
