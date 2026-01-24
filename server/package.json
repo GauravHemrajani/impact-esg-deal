@@ -8,7 +8,9 @@
     "start": "node server.js"
   },
   "dependencies": {
-    "boardgame.io": "^0.50.2"
+    "@koa/router": "^15.2.0",
+    "boardgame.io": "^0.50.2",
+    "koa": "^3.1.1"
   },
   "engines": {
     "node": ">=18.0.0"
