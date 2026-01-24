@@ -35,10 +35,9 @@ export default function App() {
     });
   };
 
-  const handleStartGame = (serverMatchID) => {
+  const handleStartGame = () => {
     setGameState(prev => ({
       ...prev,
-      matchID: serverMatchID || prev.matchID, // Use server match ID if provided
       inWaitingRoom: false,
       inGame: true,
     }));
