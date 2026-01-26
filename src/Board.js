@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import "./Board.css";
 
-export function Board({ G, ctx, moves, playerID }) {
+export function Board({ G, ctx, moves, playerID, onGameOver, matchID, playerName }) {
   const [selectedCard, setSelectedCard] = useState(null);
   const [targetCategory, setTargetCategory] = useState(null);
   const [targetPlayer, setTargetPlayer] = useState(null);
@@ -14,6 +14,19 @@ export function Board({ G, ctx, moves, playerID }) {
   const [availableSets, setAvailableSets] = useState([]);
   const [discarding, setDiscarding] = useState(false);
   const [showBlockError, setShowBlockError] = useState(false);
+  
+  // Check if game is over - freeze all interactions
+  const isGameOver = !!ctx.gameover;
+  
+  // Check for game over
+  useEffect(() => {
+    if (ctx.gameover && onGameOver) {
+      // Delay to let players see the final state
+      setTimeout(() => {
+        onGameOver(ctx.gameover.winner);
+      }, 1500);
+    }
+  }, [ctx.gameover, onGameOver]);
   
   // Auto-exit discard mode when hand reaches 7 or fewer cards
   useEffect(() => {
@@ -71,6 +84,11 @@ export function Board({ G, ctx, moves, playerID }) {
   };
 
   const handlePlayCard = (cardIndex) => {
+    // Don't allow any actions when game is over
+    if (isGameOver) {
+      return;
+    }
+    
     // Don't allow playing cards when it's not your turn
     if (ctx.currentPlayer !== playerID) {
       return;
@@ -499,8 +517,8 @@ export function Board({ G, ctx, moves, playerID }) {
                   )}
                   
                   <button
-                    onClick={() => discarding ? moves.discardCard(index) : handlePlayCard(index)}
-                    disabled={isDisabled}
+                    onClick={() => (isGameOver || discarding) ? (isGameOver ? null : moves.discardCard(index)) : handlePlayCard(index)}
+                    disabled={isDisabled || isGameOver}
                     className={`card-button ${discarding ? 'discard' : 'play'}`}
                   >
                     {discarding ? "Discard" : "Play"}
@@ -518,18 +536,18 @@ export function Board({ G, ctx, moves, playerID }) {
             marginBottom: '10px', 
             fontSize: '18px', 
             fontWeight: 'bold',
-            color: ctx.currentPlayer === playerID ? '#4caf50' : '#ff9800'
+            color: isGameOver ? '#ff5722' : (ctx.currentPlayer === playerID ? '#4caf50' : '#ff9800')
           }}>
-            {ctx.currentPlayer === playerID ? "🎯 Your Turn!" : "⏳ Waiting for opponent..."}
+            {isGameOver ? "🎮 Game Over!" : (ctx.currentPlayer === playerID ? "🎯 Your Turn!" : "⏳ Waiting for opponent...")}
           </div>
           
-          {ctx.currentPlayer !== playerID ? (
+          {ctx.currentPlayer !== playerID || isGameOver ? (
             <button 
               disabled
               className="end-turn-button"
               style={{ opacity: 0.5, cursor: 'not-allowed' }}
             >
-              Opponent's Turn
+              {isGameOver ? "Game Over" : "Opponent's Turn"}
             </button>
           ) : discarding && player.hand.length > 7 ? (
             <div className="discard-warning">
@@ -556,7 +574,7 @@ export function Board({ G, ctx, moves, playerID }) {
       </div>
       
       {/* Block Attack Popup - shows attacks at start of turn */}
-      {hasAttacksToResolve && currentAttackIndex < myPendingAttacks.length && (
+      {!isGameOver && hasAttacksToResolve && currentAttackIndex < myPendingAttacks.length && (
         <div className="modal-overlay">
           <div className="modal-content">
             <h2 className="modal-header" style={{ color: "#f44336" }}>⚠️ Incoming Attack! ({currentAttackIndex + 1}/{myPendingAttacks.length})</h2>
@@ -710,7 +728,7 @@ export function Board({ G, ctx, moves, playerID }) {
       )}
 
       {/* Wild Card Category Selection */}
-      {selectedCard !== null && player.hand[selectedCard]?.category === "Wild" && (
+      {!isGameOver && selectedCard !== null && player.hand[selectedCard]?.category === "Wild" && (
         <div className="modal-overlay">
           <div className="modal-content selection-panel selection-panel-wild">
             <h3 className="modal-header">Select Category for {player.hand[selectedCard].name}</h3>
@@ -733,7 +751,7 @@ export function Board({ G, ctx, moves, playerID }) {
       )}
 
       {/* Action Card Target Selection */}
-      {selectedCard !== null && player.hand[selectedCard]?.type === "Action" && targetPlayer === null && (
+      {!isGameOver && selectedCard !== null && player.hand[selectedCard]?.type === "Action" && targetPlayer === null && (
         <div className="modal-overlay">
           <div className="modal-content selection-panel selection-panel-action">
             <h3 className="modal-header">Play {player.hand[selectedCard].name} - Select Target Player</h3>
@@ -759,7 +777,7 @@ export function Board({ G, ctx, moves, playerID }) {
       )}
 
       {/* Set Selection UI for steal-set */}
-      {selectingSet && selectedCard !== null && targetPlayer !== null && (
+      {!isGameOver && selectingSet && selectedCard !== null && targetPlayer !== null && (
         <div className="modal-overlay">
           <div className="modal-content">
             <h3 className="modal-header" style={{ color: "#ff9800" }}>🎯 Hostile Takeover - Select Which Set to Steal</h3>
@@ -800,7 +818,7 @@ export function Board({ G, ctx, moves, playerID }) {
       )}
 
       {/* Asset Selection UI - Opponent's Assets */}
-      {selectedCard !== null && targetPlayer !== null && selectingAsset && (
+      {!isGameOver && selectedCard !== null && targetPlayer !== null && selectingAsset && (
         <div className="modal-overlay">
           <div className="modal-content" style={{ maxWidth: "800px" }}>
             <h3 className="modal-header">Select which asset to {player.hand[selectedCard].effect === "swap-asset" ? "take" : "discard"} from Player {targetPlayer}</h3>
@@ -874,7 +892,7 @@ export function Board({ G, ctx, moves, playerID }) {
       )}
 
       {/* Asset Selection UI - Your Assets (for swap) */}
-      {selectedCard !== null && selectingYourAsset && selectedOpponentAsset !== null && (
+      {!isGameOver && selectedCard !== null && selectingYourAsset && selectedOpponentAsset !== null && (
         <div className="modal-overlay">
           <div className="modal-content selection-panel selection-panel-swap" style={{ maxWidth: "800px" }}>
             <h3 className="modal-header">Now select which of YOUR assets to give in exchange</h3>
@@ -946,6 +964,47 @@ export function Board({ G, ctx, moves, playerID }) {
             >
               Cancel
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Game Over Overlay - Shows during 1.5s transition */}
+      {isGameOver && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          animation: 'fadeIn 0.3s ease-in',
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            padding: '40px 60px',
+            borderRadius: '20px',
+            textAlign: 'center',
+            animation: 'bounceIn 0.6s ease-out',
+          }}>
+            <h1 style={{
+              fontSize: '48px',
+              margin: '0 0 20px 0',
+              color: 'white',
+              textShadow: '2px 2px 4px rgba(0,0,0,0.3)',
+            }}>
+              🎮 Game Over!
+            </h1>
+            <p style={{
+              fontSize: '20px',
+              color: 'white',
+              margin: 0,
+            }}>
+              Transitioning to results...
+            </p>
           </div>
         </div>
       )}

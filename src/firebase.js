@@ -17,7 +17,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 // Initialize Firebase services
-export const db = getFirestore(app);  // For database (storing game data)
-export const auth = getAuth(app);     // For authentication (player login)
+export const db = getFirestore(app);       // Firestore - for lobbies, stats
+export const auth = getAuth(app);          // For authentication (player login)
 
 export default app;

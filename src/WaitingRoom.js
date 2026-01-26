@@ -9,6 +9,7 @@ export function WaitingRoom({ matchID, playerID, playerName, onStartGame, onLeav
   const [error, setError] = useState('');
 
   useEffect(() => {
+    
     // Real-time listener for lobby updates
     const unsubscribe = onSnapshot(
       doc(db, 'lobbies', matchID),
@@ -20,7 +21,10 @@ export function WaitingRoom({ matchID, playerID, playerName, onStartGame, onLeav
 
           // Auto-start if both players ready and game started
           if (data.status === 'playing') {
-            onStartGame();
+            const player0Name = data.players.find(p => p.id === '0')?.name || 'Player 1';
+            const player1Name = data.players.find(p => p.id === '1')?.name || 'Player 2';
+            const currentMatchID = data.matchID || matchID;
+            onStartGame(player0Name, player1Name, currentMatchID);
           }
         } else {
           // Lobby deleted (host left) - kick everyone out
@@ -38,8 +42,10 @@ export function WaitingRoom({ matchID, playerID, playerName, onStartGame, onLeav
       }
     );
 
-    return () => unsubscribe();
-  }, [matchID, onStartGame, onLeave]);
+    return () => {
+      unsubscribe();
+    };
+  }, [matchID, onStartGame, onLeave, playerID, playerName]);
 
   const toggleReady = async () => {
     try {
@@ -63,7 +69,10 @@ export function WaitingRoom({ matchID, playerID, playerName, onStartGame, onLeav
         status: 'playing',
       });
       
-      onStartGame();
+      const player0Name = lobby.players.find(p => p.id === '0')?.name || 'Player 1';
+      const player1Name = lobby.players.find(p => p.id === '1')?.name || 'Player 2';
+      const currentMatchID = lobby.matchID || matchID;
+      onStartGame(player0Name, player1Name, currentMatchID);
     } catch (err) {
       setError('Failed to start game: ' + err.message);
       console.error('Start game error:', err);

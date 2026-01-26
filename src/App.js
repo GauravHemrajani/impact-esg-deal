@@ -5,24 +5,22 @@ import { ImpactGame } from "./Game";
 import { Board } from "./Board";
 import { LobbyLanding } from "./LobbyLanding";
 import { WaitingRoom } from "./WaitingRoom";
+import { GameOverScreen } from "./GameOverScreen";
 
 const serverURL = process.env.REACT_APP_SERVER_URL || 'http://localhost:8000';
-
-const GameClient = Client({
-  game: ImpactGame,
-  board: Board,
-  debug: true,
-  multiplayer: SocketIO({ server: serverURL }),
-});
 
 export default function App() {
   const [gameState, setGameState] = useState({
     inLobby: true,
     inWaitingRoom: false,
     inGame: false,
+    inGameOver: false,
     matchID: null,
     playerID: null,
     playerName: null,
+    player0Name: null,
+    player1Name: null,
+    winner: null,
   });
 
   const handleJoinGame = (gameInfo) => {
@@ -30,15 +28,38 @@ export default function App() {
       inLobby: false,
       inWaitingRoom: true,
       inGame: false,
+      inGameOver: false,
       ...gameInfo,
     });
   };
 
-  const handleStartGame = () => {
+  const handleStartGame = (player0Name, player1Name, newMatchID) => {
     setGameState(prev => ({
       ...prev,
       inWaitingRoom: false,
       inGame: true,
+      inGameOver: false,
+      player0Name,
+      player1Name,
+      matchID: newMatchID || prev.matchID, // Update matchID if provided
+    }));
+  };
+
+  const handleGameOver = (winner) => {
+    setGameState(prev => ({
+      ...prev,
+      inGame: false,
+      inGameOver: true,
+      winner,
+    }));
+  };
+
+  const handlePlayAgain = () => {
+    setGameState(prev => ({
+      ...prev,
+      inGameOver: false,
+      inWaitingRoom: true,
+      winner: null,
     }));
   };
 
@@ -47,9 +68,13 @@ export default function App() {
       inLobby: true,
       inWaitingRoom: false,
       inGame: false,
+      inGameOver: false,
       matchID: null,
       playerID: null,
       playerName: null,
+      player0Name: null,
+      player1Name: null,
+      winner: null,
     });
   };
 
@@ -71,12 +96,36 @@ export default function App() {
     );
   }
 
-  // Show game
+  // Show game over screen
+  if (gameState.inGameOver) {
+    return (
+      <GameOverScreen
+        winner={gameState.winner}
+        matchID={gameState.matchID}
+        playerID={gameState.playerID}
+        player0Name={gameState.player0Name}
+        player1Name={gameState.player1Name}
+        onPlayAgain={handlePlayAgain}
+        onExit={handleLeaveLobby}
+      />
+    );
+  }
+
+  // Show game - create GameClient dynamically with onGameOver prop
+  const GameClient = Client({
+    game: ImpactGame,
+    board: Board,
+    debug: true,
+    multiplayer: SocketIO({ server: serverURL }),
+  });
+
   return (
     <div>
       <GameClient 
         matchID={gameState.matchID}
         playerID={gameState.playerID}
+        onGameOver={handleGameOver}
+        playerName={gameState.playerName}
       />
     </div>
   );
