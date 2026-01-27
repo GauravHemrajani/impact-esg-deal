@@ -288,10 +288,6 @@ export function Board({ G, ctx, moves, playerID, onGameOver, matchID, playerName
     <div className="game-container">
       {/* === OPPONENT AREA (TOP) === */}
       <div className="opponent-area">
-        <div className="opponent-info">
-          <h3 style={{ margin: 0 }}>Opponent (Player {ctx.currentPlayer === "0" ? "1" : "0"})</h3>
-        </div>
-        
         {/* Opponent's Bank & Fines Display */}
         <div className="opponent-hand-display" style={{ gap: "20px", marginBottom: "20px" }}>
           <div style={{ 
@@ -430,8 +426,8 @@ export function Board({ G, ctx, moves, playerID, onGameOver, matchID, playerName
           </div>
         </div>
 
-        {/* Player's Board */}
-        <div className="player-board-areas">
+        {/* Player's Board - Centered like opponent */}
+        <div className="opponent-board-areas">
           {/* Environment */}
           <div className={`board-area board-area-e player-board-area ${isEComplete ? 'board-complete' : ''}`}>
             <div className="board-area-header">🌍 Environment ({player.board.E.length}/3) {isEComplete && "✅"}</div>
@@ -485,6 +481,7 @@ export function Board({ G, ctx, moves, playerID, onGameOver, matchID, playerName
             {player.hand.map((card, index) => {
               const isDisabled = !discarding && player.movesPlayed >= 3;
               const isSelected = selectedCard === index;
+              const isNotYourTurn = ctx.currentPlayer !== playerID;
               
               // Determine card CSS class
               let cardClass = 'card';
@@ -500,7 +497,7 @@ export function Board({ G, ctx, moves, playerID, onGameOver, matchID, playerName
               }
               
               if (isSelected) cardClass += ' selected';
-              if (isDisabled) cardClass += ' disabled';
+              if (isDisabled || isNotYourTurn) cardClass += ' disabled';
 
               return (
                 <div key={`${card.id}-${index}`} className={cardClass}>
@@ -518,7 +515,7 @@ export function Board({ G, ctx, moves, playerID, onGameOver, matchID, playerName
                   
                   <button
                     onClick={() => (isGameOver || discarding) ? (isGameOver ? null : moves.discardCard(index)) : handlePlayCard(index)}
-                    disabled={isDisabled || isGameOver}
+                    disabled={isDisabled || isGameOver || isNotYourTurn}
                     className={`card-button ${discarding ? 'discard' : 'play'}`}
                   >
                     {discarding ? "Discard" : "Play"}
@@ -573,8 +570,8 @@ export function Board({ G, ctx, moves, playerID, onGameOver, matchID, playerName
         </div>
       </div>
       
-      {/* Block Attack Popup - shows attacks at start of turn */}
-      {!isGameOver && hasAttacksToResolve && currentAttackIndex < myPendingAttacks.length && (
+      {/* Block Attack Popup - shows attacks at start of turn (only when it's your turn) */}
+      {!isGameOver && ctx.currentPlayer === playerID && hasAttacksToResolve && currentAttackIndex < myPendingAttacks.length && (
         <div className="modal-overlay">
           <div className="modal-content">
             <h2 className="modal-header" style={{ color: "#f44336" }}>⚠️ Incoming Attack! ({currentAttackIndex + 1}/{myPendingAttacks.length})</h2>

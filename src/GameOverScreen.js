@@ -44,6 +44,32 @@ export function GameOverScreen({
     recordAndFetchStats();
   }, [winner, player0Name, player1Name, matchID, matchRecorded]);
 
+  // Listen for opponent leaving
+  useEffect(() => {
+    const lobbyRef = doc(db, 'lobbies', matchID);
+    
+    const unsubscribe = onSnapshot(
+      lobbyRef,
+      (docSnap) => {
+        if (!docSnap.exists()) {
+          // Lobby deleted - opponent (host) left
+          setOpponentLeft(true);
+        } else {
+          const data = docSnap.data();
+          // Check if opponent left (only 1 player remaining)
+          if (data.players && data.players.length < 2) {
+            setOpponentLeft(true);
+          }
+        }
+      },
+      (err) => {
+        console.error('Error listening to lobby:', err);
+      }
+    );
+
+    return () => unsubscribe();
+  }, [matchID]);
+
   const handlePlayAgain = async () => {
     try {
       // Generate a new matchID for a fresh game
